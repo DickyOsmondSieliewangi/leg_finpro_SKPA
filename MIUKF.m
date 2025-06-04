@@ -12,7 +12,7 @@ function [x_pred, error_MIUKF, electParams] = MIUKF(x, theta_out, T)
     persistent posterior_x posterior_P;
     if isempty(posterior_x)
         posterior_x = zeros(3, 1); % Initial state vector [U1, U2, SOC]
-        posterior_x(3) = 0.8; % Initial SOC, can be adjusted based on prior knowledge
+        posterior_x(3) = (2.7938 - 2.7)/(3.6 - 2.7); % Initial SOC, can be adjusted based on prior knowledge
     end
     if isempty(posterior_P)
         posterior_P = eye(3) * 1e-3; % Initial covariance matrix
@@ -98,7 +98,7 @@ function [x_pred, error_MIUKF, electParams] = MIUKF(x, theta_out, T)
     end
 
     % Add measurement noise
-    R = 1e-10; % Measurement noise variance (terminal voltage noise)
+    R = 1e-8; % Measurement noise variance (terminal voltage noise)
     obs_P = obs_P + R;
 
     diff_P = zeros(L, 1); % Initialize observation covariance Pxy % [3×1] for 3 states, 1 measurement
@@ -125,7 +125,7 @@ function [x_pred, error_MIUKF, electParams] = MIUKF(x, theta_out, T)
     end
 
     currentError = y - y_pred; % Innovation or measurement residual
-    error_history = [currentError error_history(1:end-1)]; % Shift the error history
+    error_history = [currentError error_history(1:end-1)]; % Shift the error history / innovation
     gain_history = [K gain_history(:,1:end-1)]; % Shift the gain history
 
     gamma = zeros(1, M); % Initialize gamma vector
@@ -135,24 +135,22 @@ function [x_pred, error_MIUKF, electParams] = MIUKF(x, theta_out, T)
     end
     %matrix by  measured value, and M is the information length
 
-    % Multi-innovation correction
-    errorMI = zeros(3, 1); 
+    errorMI = 0;
     for i = 1:M
-        if abs(error_history(i)) > 1e-10 % Avoid numerical issues
-            errorMI = errorMI + gamma(i) * gain_history(:, i) * error_history(i);
-            %        [3×1]    += scalar   * [3×1]           * scalar
-        end
+        errorMI = errorMI + gamma(i) * gain_history(:, i) * error_history(i);
+        %[3×1]    = [3×1] + scalar   * [3×1]           * scalar
     end
 
     %Update posterior state
     posterior_x = a_priori_x + errorMI;
     posterior_x(3) = max(0, min(1, posterior_x(3)));
     posterior_P = a_priori_P - K * obs_P * K';
+
     
     %Outputs
     Ut = battery_output_model(posterior_x, u, electParams, theta_out);
     I = u;
     SOC = posterior_x(3);
     x_pred = [Ut I SOC];
-    error_MIUKF = errorMI; % Placeholder for the error, should be calculated based on the MIUKF algorithm
+    error_MIUKF = error_history; % Placeholder for the error, should be calculated based on the MIUKF algorithm
 end

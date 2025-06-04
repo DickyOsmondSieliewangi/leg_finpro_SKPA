@@ -15,7 +15,7 @@ x(2,:) = -x(2,:); % Invert current direction to match battery model (negative fo
 %% Coulomb Counting for True SOC and OCV
 % Battery parameters
 Qn = 1.1 * 3600; % 1100 mAh = 1.1 Ah = 3960 As (coulombs)
-initial_SOC = 0.8; % Initial SOC
+initial_SOC = (2.7938 - 2.7)/(3.6 - 2.7); % Initial SOC
 coulombic_efficiency = 1;
 
 % Initialize true SOC array
@@ -60,7 +60,7 @@ ylabel('SOC', 'FontSize', 12);
 grid on;
 
 %% Initialize Parameters
-error_MIUKF = [0; 0; 0;];
+error_MIUKF = zeros(1,22);
 T = 5;
 update_interval = 60;
 
@@ -162,17 +162,71 @@ for i = 1:6
     grid on;
 end
 
+%% Plotting SOC vs Uocv
+% %Sort data points by SOC for a cleaner curve
+% [sortedSOC, sortIndex] = sort(SOC_est_history);
+% sortedOCV = Uocv_est_history(sortIndex);
+
+% figure('Name', 'SOC vs OCV', 'Position', [100 50 1200 700]);
+% plot(sortedSOC, sortedOCV, 'b-', 'LineWidth', 1.5)
+% title('SOC vs Open Circuit Voltage', 'FontSize', 14);
+% xlabel('State of Charge (SOC)', 'FontSize', 12);
+% ylabel('Open Circuit Voltage (OCV) [V]', 'FontSize', 12);
+% grid on;
+
+% % Add alternative scatter plot to see data distribution
+% figure('Name', 'SOC vs OCV Scatter', 'Position', [100 50 1200 700]);
+% scatter(SOC_est_history, Uocv_est_history, 10);
+% title('SOC vs Open Circuit Voltage Relationship', 'FontSize', 14);
+% xlabel('State of Charge (SOC)', 'FontSize', 12);
+% ylabel('Open Circuit Voltage (OCV) [V]', 'FontSize', 12);
+% grid on;
+
+%% Plotting Clean SOC vs OCV with SOC=1 on Left
+% Filter out extreme values
+% validIdx = Uocv_est_history > 2.7 & Uocv_est_history < 4.0;
+% SOC_filtered = SOC_est_history(validIdx);
+% OCV_filtered = Uocv_est_history(validIdx);
+
+% Sort by SOC (ascending)
+% [sortedSOC, sortIdx] = sort(SOC_filtered);
+% sortedOCV = OCV_filtered(sortIdx);
+
+[sortedSOC, sortIndex] = sort(SOC_est_history);
+sortedOCV = Uocv_est_history(sortIndex);
+
+smoothedOCV = movmean(sortedOCV,7000);
+
+% Create new figure with SOC=1 on the left
+figure('Name', 'SOC vs Open Circuit Voltage (LiFePO4)', 'Position', [100 50 1200 700]);
+
+% Plot with SOC=1 on the left by using 1-SOC
+plot(1-sortedSOC, smoothedOCV, 'b-', 'LineWidth', 2.5);
+
+% Improve graph appearance
+title('SOC vs Open Circuit Voltage (LiFePO4)', 'FontSize', 16, 'FontWeight', 'bold');
+xlabel('State of Charge (SOC)', 'FontSize', 14);
+ylabel('Open Circuit Voltage (OCV) [V]', 'FontSize', 14);
+grid on;
+box on;
+
+% Create better x-axis ticks for clearer reading
+set(gca, 'FontSize', 12, 'XTick', 0:0.1:1);
+xticklabels({'1.0','0.9','0.8','0.7','0.6','0.5','0.4','0.3','0.2','0.1','0'});
+ylim([3.1 3.6]);
+
 %% Comparing Ut and SOC Estimates
 figure('Name', 'Ut and SOC Estimates vs Real', 'Position', [100 50 1200 700]);
     
 subplot(2,1,1);
-plot(time, Ut_est_history, 'b-', 'LineWidth', 1.5);
-hold on;
 plot(time, x(1,:), 'r-', 'LineWidth', 1.5);
+hold on;
+plot(time, Ut_est_history, 'b-', 'LineWidth', 1.5);
+
 title('Terminal Voltage Estimate', 'FontSize', 14);
 xlabel('Time [s]', 'FontSize', 12);
 ylabel('Voltage [V]', 'FontSize', 12);
-legend('Estimated V_t', 'Measured V_t', 'Location', 'best', 'FontSize', 10);
+legend('Measured V_t', 'Estimated V_t', 'Location', 'best', 'FontSize', 10);
 grid on;
 
 subplot(2,1,2);

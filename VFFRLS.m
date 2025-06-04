@@ -1,4 +1,4 @@
-function [theta_out, lambda] = VFFRLS(x, error_MIUKF)
+function [theta_out, lambda, y_pred] = VFFRLS(x, error_MIUKF)
     %From x calculate phi
     %x = [U1(k) U2(k) SOC(k)]
     %phi = [1 -Ut(k-1) -Ut(k-2) -I(k) -I(k-1) -I(k-2)]
@@ -24,23 +24,12 @@ function [theta_out, lambda] = VFFRLS(x, error_MIUKF)
     n = length(phi);
 
     %From error_MIUKF calculate lambda
-    persistent error_window;
     S = 22;
     rho = 200;
     lambda_min = 0.9;
     lambda_max = 0.995;
 
-    if isempty(error_window)
-        error_window = zeros(3, S); % Initialize with a size of 10
-    end
-
-    % Shift the error window to make room for the new error
-    error_window = [error_MIUKF error_window(:,1:end-1)];
-    sum_squared_error = 0;
-    % Calculate the sum of squared errors
-    for i = 1:S
-        sum_squared_error = sum_squared_error + error_window(:,i)' * error_window(:,i);
-    end
+    sum_squared_error = error_MIUKF * error_MIUKF'; % Calculate the sum of squared errors
 
     % Calculate L(k+1) = -ρ * Σ(ei * ei^T) / S
     L = -rho * sum_squared_error / S;
@@ -85,13 +74,4 @@ function [theta_out, lambda] = VFFRLS(x, error_MIUKF)
 
     % Add P matrix regularization to prevent numerical degradation
     % This is crucial for long-term stability
-    if mod(i, 20) == 0  % Every 20 iterations
-        % Force symmetry
-        P = 0.5 * (P + P');
-        
-        % Ensure minimum eigenvalue
-        [V, D] = eig(P);
-        D = max(D, eye(size(D)) * 1e-6);
-        P = V * D * V';
-    end
 end

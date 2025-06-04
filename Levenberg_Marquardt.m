@@ -28,13 +28,13 @@ function electParams = Levenberg_Marquardt(theta_out, T)
     options = optimoptions('lsqnonlin', ...
         'Algorithm', 'levenberg-marquardt', ...
         'Display', 'off', ...
-        'TolFun', 1e-10, ...
-        'TolX', 1e-10, ...
-        'MaxIter', 100000);
+        'TolFun', 1e-8, ...
+        'TolX', 1e-8, ...
+        'MaxIter', 1e10);
     
     % Set bounds (all parameters should be positive)
     lb = [1e-10, 1e-10, 1e2, 1e-10, 1e2];  % Lower bounds
-    ub = [];   % Upper bounds
+    ub = [];  % Upper bounds
     
     % Solve the nonlinear system
     [x_opt, ~, ~, exitflag] = lsqnonlin(equations, x0, lb, ub, options);
@@ -71,19 +71,21 @@ function residuals = residual_function(x, a1_target, a2_target, b0_target, b1_ta
     
     % Calculate what a1, a2, b0, b1, b2 should be with current parameters
     % Using your forward equations:
+    tau1 = C1 * R1; % Time constant for first RC pair
+    tau2 = C2 * R2; % Time constant for second RC pair
     
-    a1_calc = (T - 2*C2*R2) / (T + 2*C2*R2) + (T - 2*C1*R1) / (T + 2*C1*R1);
+    a1_calc = (T - 2*tau2) / (T + 2*tau2) + (T - 2*tau1) / (T + 2*tau1);
     
-    a2_calc = ((T - 2*C1*R1) * (T - 2*C2*R2)) / ((T + 2*C1*R1) * (T + 2*C2*R2));
+    a2_calc = ((T - 2*tau1) * (T - 2*tau2)) / ((T + 2*tau1) * (T + 2*tau2));
     
-    b0_calc = T * (R1/(T + 2*C1*R1) + R2/(T + 2*C2*R2)) + R0;
+    b0_calc = T * (R1/(T + 2*tau1) + R2/(T + 2*tau2)) + R0;
     
-    b1_calc = (2*T^2*(R1 + R2) + R0*(2*T^2 - 8*C1*C2*R1*R2)) / ...
-              ((T + 2*C1*R1) * (T + 2*C2*R2));
+    b1_calc = (2*T^2*(R1 + R2) + R0*(2*T^2 - 8*tau1*tau2)) / ...
+              ((T + 2*tau1) * (T + 2*tau2));
     
-    b2_calc = (T*(R1*(T - 2*C2*R2) + R2*(T - 2*C1*R1)) + ...
-               R0*(T - 2*C2*R2)*(T - 2*C1*R1)) / ...
-              ((T + 2*C1*R1) * (T + 2*C2*R2));
+    b2_calc = (T*(R1*(T - 2*tau2) + R2*(T - 2*tau1)) + ...
+               R0*(T - 2*tau2)*(T - 2*tau1)) / ...
+              ((T + 2*tau1) * (T + 2*tau2));
     
     % Calculate residuals (difference between target and calculated values)
     residuals = [
