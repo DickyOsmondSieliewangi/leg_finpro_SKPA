@@ -17,7 +17,7 @@ function electParams = Levenberg_Marquardt(theta_out, T)
     % Initial guess for electrical parameters (from paper)
     persistent prev_electParams;
     if isempty(prev_electParams)
-        prev_electParams = [0.002, 0.0012, 5e4, 0.0011, 5e4];
+        prev_electParams = [0.002, 0.0012, 7.23e4, 0.0011, 4.49e4];
     end
     x0 = prev_electParams; % [R0, R1, C1, R2, C2]
     
@@ -33,7 +33,7 @@ function electParams = Levenberg_Marquardt(theta_out, T)
         'MaxIter', 1e10);
     
     % Set bounds (all parameters should be positive)
-    lb = [1e-10, 1e-10, 1e2, 1e-10, 1e2];  % Lower bounds
+    lb = [0, 0, 0, 0, 0];  % Lower bounds
     ub = [];  % Upper bounds
     
     % Solve the nonlinear system

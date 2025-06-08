@@ -15,7 +15,7 @@ function [x_pred, error_MIUKF, electParams] = MIUKF(x, theta_out, T)
         posterior_x(3) = (2.7938 - 2.7)/(3.6 - 2.7); % Initial SOC, can be adjusted based on prior knowledge
     end
     if isempty(posterior_P)
-        posterior_P = eye(3) * 1e-3; % Initial covariance matrix
+        posterior_P = eye(3) * 1e-4; % Initial covariance matrix
     end
 
     L = 3; % Number of state variables and sigma points
@@ -98,7 +98,7 @@ function [x_pred, error_MIUKF, electParams] = MIUKF(x, theta_out, T)
     end
 
     % Add measurement noise
-    R = 1e-8; % Measurement noise variance (terminal voltage noise)
+    R = 1; % Measurement noise variance (terminal voltage noise)
     obs_P = obs_P + R;
 
     diff_P = zeros(L, 1); % Initialize observation covariance Pxy % [3×1] for 3 states, 1 measurement

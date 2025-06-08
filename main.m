@@ -72,6 +72,9 @@ Ut_est_history = zeros(1,N);
 SOC_est_history = zeros(1,N);
 Uocv_est_history = zeros(1,N);
 
+Uocv_map_est_history = zeros(1,N);
+load('ocv_soc_coeffs.mat');
+
 [theta_out, lambda] = VFFRLS(x(:,1), error_MIUKF);
 [x_pred, error_MIUKF, electParams] = MIUKF(x(:,1), theta_out, T);
 
@@ -82,6 +85,8 @@ electParams_history(:,1) = electParams;
 Ut_est_history(1) = x_pred(1);
 SOC_est_history(1) = x_pred(3);
 Uocv_est_history(1) = theta_out(1)/(1 + theta_out(2) + theta_out(3));
+
+Uocv_map_est_history(1) = polyval(poly_coeffs,x_pred(3));
 
 for i = 2:N
     T = time(i) - time(i-1);
@@ -97,6 +102,8 @@ for i = 2:N
     Ut_est_history(i) = x_pred(1);
     SOC_est_history(i) = x_pred(3);
     Uocv_est_history(i) = theta_out(1)/(1 + theta_out(2) + theta_out(3));
+
+    Uocv_map_est_history(i) = polyval(poly_coeffs,x_pred(3));
 end
 
 %% Plotting Ut, Uocv, and SOC Estimates
@@ -110,7 +117,9 @@ ylabel('Voltage [V]', 'FontSize', 12);
 grid on;
 
 subplot(3,1,2);
-plot(time, Uocv_est_history, 'r-', 'LineWidth', 1.5);
+% plot(time, Uocv_est_history, 'r-', 'LineWidth', 1.5);
+% hold on;
+plot(time, Uocv_map_est_history, 'g-', 'LineWidth', 1.5);
 title('Open Circuit Voltage Estimate', 'FontSize', 14);
 xlabel('Time [s]', 'FontSize', 12);
 ylabel('Voltage [V]', 'FontSize', 12);
@@ -162,26 +171,6 @@ for i = 1:6
     grid on;
 end
 
-%% Plotting SOC vs Uocv
-% %Sort data points by SOC for a cleaner curve
-% [sortedSOC, sortIndex] = sort(SOC_est_history);
-% sortedOCV = Uocv_est_history(sortIndex);
-
-% figure('Name', 'SOC vs OCV', 'Position', [100 50 1200 700]);
-% plot(sortedSOC, sortedOCV, 'b-', 'LineWidth', 1.5)
-% title('SOC vs Open Circuit Voltage', 'FontSize', 14);
-% xlabel('State of Charge (SOC)', 'FontSize', 12);
-% ylabel('Open Circuit Voltage (OCV) [V]', 'FontSize', 12);
-% grid on;
-
-% % Add alternative scatter plot to see data distribution
-% figure('Name', 'SOC vs OCV Scatter', 'Position', [100 50 1200 700]);
-% scatter(SOC_est_history, Uocv_est_history, 10);
-% title('SOC vs Open Circuit Voltage Relationship', 'FontSize', 14);
-% xlabel('State of Charge (SOC)', 'FontSize', 12);
-% ylabel('Open Circuit Voltage (OCV) [V]', 'FontSize', 12);
-% grid on;
-
 %% Plotting Clean SOC vs OCV with SOC=1 on Left
 % Filter out extreme values
 % validIdx = Uocv_est_history > 2.7 & Uocv_est_history < 4.0;
@@ -194,14 +183,18 @@ end
 
 [sortedSOC, sortIndex] = sort(SOC_est_history);
 sortedOCV = Uocv_est_history(sortIndex);
+sortedmapOCV = Uocv_map_est_history(sortIndex);
 
 smoothedOCV = movmean(sortedOCV,7000);
+smoothedmapOCV = movmean(sortedmapOCV,7000);
 
 % Create new figure with SOC=1 on the left
 figure('Name', 'SOC vs Open Circuit Voltage (LiFePO4)', 'Position', [100 50 1200 700]);
 
 % Plot with SOC=1 on the left by using 1-SOC
 plot(1-sortedSOC, smoothedOCV, 'b-', 'LineWidth', 2.5);
+hold on
+plot(1-sortedSOC, sortedmapOCV, 'r-', 'LineWidth', 2.5)
 
 % Improve graph appearance
 title('SOC vs Open Circuit Voltage (LiFePO4)', 'FontSize', 16, 'FontWeight', 'bold');

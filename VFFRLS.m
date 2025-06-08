@@ -5,6 +5,7 @@ function [theta_out, lambda, y_pred] = VFFRLS(x, error_MIUKF)
 
     newUt = x(1);
     newI = x(2);
+    Uocv = x(3);
 
     % Initialize Ut and I if they are empty
     persistent Ut I;
@@ -20,7 +21,7 @@ function [theta_out, lambda, y_pred] = VFFRLS(x, error_MIUKF)
     Ut = [newUt Ut(1:end-1)];
     I = [newI I(1:end-1)];
 
-    phi = [1 -Ut(2) -Ut(3) -I(1) -I(2) -I(3)]';
+    phi = [Uocv -Ut(2) -Ut(3) -I(1) -I(2) -I(3)]';
     n = length(phi);
 
     %From error_MIUKF calculate lambda
