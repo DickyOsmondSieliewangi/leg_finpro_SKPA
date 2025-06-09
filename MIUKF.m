@@ -6,13 +6,13 @@ function [x_pred, error_MIUKF, electParams] = MIUKF(x, theta_out, T)
     u = x(2);
 
     %Use levenberg-marquardt to calculate electrical parameters
-    electParams = Levenberg_Marquardt(theta_out, T); % Assuming T=1 for simplicity
+    electParams = Levenberg_Marquardt(theta_out, T);
 
     %Calculate Sampling Points
     persistent posterior_x posterior_P;
     if isempty(posterior_x)
         posterior_x = zeros(3, 1); % Initial state vector [U1, U2, SOC]
-        posterior_x(3) = (2.7938 - 2.7)/(3.6 - 2.7); % Initial SOC, can be adjusted based on prior knowledge
+        posterior_x(3) = (2.8 - 2.7)/(3.6 - 2.7); % Initial SOC, can be adjusted based on prior knowledge
     end
     if isempty(posterior_P)
         posterior_P = eye(3) * 1e-3; % Initial covariance matrix
@@ -20,8 +20,8 @@ function [x_pred, error_MIUKF, electParams] = MIUKF(x, theta_out, T)
 
     L = 3; % Number of state variables and sigma points
     alpha = 1e-3; % Scaling parameter can be 1e-3
-    beta = 2.0; % For Gaussian distributions
-    ki = 0; % Secondary scaling parameter
+    beta = 2.0; % UKF Params
+    ki = 0; % UKF Params
 
     eta = alpha^2 * (L + ki) - L; % Scaling ratio
 
@@ -146,11 +146,10 @@ function [x_pred, error_MIUKF, electParams] = MIUKF(x, theta_out, T)
     posterior_x(3) = max(0, min(1, posterior_x(3)));
     posterior_P = a_priori_P - K * obs_P * K';
 
-    
     %Outputs
     Ut = battery_output_model(posterior_x, u, electParams, theta_out);
     I = u;
     SOC = posterior_x(3);
     x_pred = [Ut I SOC];
-    error_MIUKF = error_history; % Placeholder for the error, should be calculated based on the MIUKF algorithm
+    error_MIUKF = error_history;
 end

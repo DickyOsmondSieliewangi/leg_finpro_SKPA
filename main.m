@@ -1,11 +1,12 @@
 %%Extract the data
-% data = readmatrix('A1-007-DST-US06-FUDS-40-20120822.xlsx', 'Sheet', 'Sheet1');
+data = readmatrix('A1-007-DST-US06-FUDS-40-20120822.xlsx', 'Sheet', 'Sheet1');
 
-% Initialization
-% data = [data(:,1) data(:,4) data(:,5)]; %time = 1 Ut = 2, It = 3
-% time = data(:,1);
-% x = [data(:,3) data(:,2)]';
-% save('battery_data.mat', 'time', 'x');
+%%Initialization
+data = [data(:,1) data(:,4) data(:,5)]; %time = 1 Ut = 2, It = 3
+time = data(:,1);
+x = [data(:,3) data(:,2)]';
+save('battery_data.mat', 'time', 'x');
+
 %% Load Data
 clear;
 clear functions;
@@ -15,7 +16,7 @@ x(2,:) = -x(2,:); % Invert current direction to match battery model (negative fo
 %% Coulomb Counting for True SOC and OCV
 % Battery parameters
 Qn = 1.1 * 3600; % 1100 mAh = 1.1 Ah = 3960 As (coulombs)
-initial_SOC = (2.7938 - 2.7)/(3.6 - 2.7); % Initial SOC
+initial_SOC = ((x(1,1)) - 2.7)/(3.6 - 2.7); % Initial SOC (Assume related to nominal voltage)
 coulombic_efficiency = 1;
 
 % Initialize true SOC array
@@ -62,7 +63,7 @@ grid on;
 %% Initialize Parameters
 error_MIUKF = zeros(1,22);
 T = 5;
-update_interval = 60;
+update_interval = 90;
 
 N = length(time);
 theta_history = zeros(6, N);
@@ -162,40 +163,12 @@ for i = 1:6
     grid on;
 end
 
-%% Plotting SOC vs Uocv
-% %Sort data points by SOC for a cleaner curve
-% [sortedSOC, sortIndex] = sort(SOC_est_history);
-% sortedOCV = Uocv_est_history(sortIndex);
-
-% figure('Name', 'SOC vs OCV', 'Position', [100 50 1200 700]);
-% plot(sortedSOC, sortedOCV, 'b-', 'LineWidth', 1.5)
-% title('SOC vs Open Circuit Voltage', 'FontSize', 14);
-% xlabel('State of Charge (SOC)', 'FontSize', 12);
-% ylabel('Open Circuit Voltage (OCV) [V]', 'FontSize', 12);
-% grid on;
-
-% % Add alternative scatter plot to see data distribution
-% figure('Name', 'SOC vs OCV Scatter', 'Position', [100 50 1200 700]);
-% scatter(SOC_est_history, Uocv_est_history, 10);
-% title('SOC vs Open Circuit Voltage Relationship', 'FontSize', 14);
-% xlabel('State of Charge (SOC)', 'FontSize', 12);
-% ylabel('Open Circuit Voltage (OCV) [V]', 'FontSize', 12);
-% grid on;
-
 %% Plotting Clean SOC vs OCV with SOC=1 on Left
-% Filter out extreme values
-% validIdx = Uocv_est_history > 2.7 & Uocv_est_history < 4.0;
-% SOC_filtered = SOC_est_history(validIdx);
-% OCV_filtered = Uocv_est_history(validIdx);
-
-% Sort by SOC (ascending)
-% [sortedSOC, sortIdx] = sort(SOC_filtered);
-% sortedOCV = OCV_filtered(sortIdx);
 
 [sortedSOC, sortIndex] = sort(SOC_est_history);
 sortedOCV = Uocv_est_history(sortIndex);
 
-smoothedOCV = movmean(sortedOCV,7000);
+smoothedOCV = movmean(sortedOCV,1400);
 
 % Create new figure with SOC=1 on the left
 figure('Name', 'SOC vs Open Circuit Voltage (LiFePO4)', 'Position', [100 50 1200 700]);
@@ -218,7 +191,7 @@ ylim([3.1 3.6]);
 %% Comparing Ut and SOC Estimates
 figure('Name', 'Ut and SOC Estimates vs Real', 'Position', [100 50 1200 700]);
     
-subplot(2,1,1);
+subplot(3,1,1);
 plot(time, x(1,:), 'r-', 'LineWidth', 1.5);
 hold on;
 plot(time, Ut_est_history, 'b-', 'LineWidth', 1.5);
@@ -229,7 +202,7 @@ ylabel('Voltage [V]', 'FontSize', 12);
 legend('Measured V_t', 'Estimated V_t', 'Location', 'best', 'FontSize', 10);
 grid on;
 
-subplot(2,1,2);
+subplot(3,1,2);
 plot(time, SOC_est_history, 'g-', 'LineWidth', 1.5);
 hold on;
 plot(time, true_SOC, 'y-', 'LineWidth', 1.5);
@@ -238,3 +211,48 @@ xlabel('Time [s]', 'FontSize', 12);
 ylabel('SOC', 'FontSize', 12);
 legend('Estimated SOC', 'True SOC', 'Location', 'best', 'FontSize', 10);
 grid on;
+
+subplot(3,1,3);
+plot(time, abs(true_SOC - SOC_est_history), 'g-', 'LineWidth', 1.5);
+title('State of Charge (SOC) Estimate Error', 'FontSize', 14);
+xlabel('Time [s]', 'FontSize', 12);
+ylabel('Error', 'FontSize', 12);
+grid on;
+
+%% Save Graphs
+% Create folder for saving if it doesn't exist
+savePath = 'graphs';
+if ~exist(savePath, 'dir')
+    mkdir(savePath);
+end
+
+% Get all valid figure handles
+figHandles = findobj('Type', 'figure');
+
+% Loop through each figure and save
+for i = 1:length(figHandles)
+    fig = figHandles(i);
+    
+    % Get figure name or number
+    if isempty(fig.Name)
+        figureName = sprintf('Figure%d', fig.Number);
+    else
+        figureName = strrep(fig.Name, ' ', '_');
+        figureName = strrep(figureName, ':', '');
+        figureName = strrep(figureName, '/', '_');
+    end
+    
+    % Save as PNG (more robust method)
+    pngFile = fullfile(savePath, [figureName '.png']);
+    
+    % Check if figure is valid
+    if isvalid(fig)
+        % Use print instead of saveas for better reliability
+        print(fig, pngFile, '-dpng', '-r300');
+        fprintf('Saved: %s\n', pngFile);
+    else
+        fprintf('Skipping invalid figure: %s\n', figureName);
+    end
+end
+
+fprintf('All figures saved to "%s" folder\n', savePath);

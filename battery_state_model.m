@@ -16,24 +16,8 @@ function pred = battery_state_model (u, x, T, electParams)
     n = 1; %coulomb efficiency (example value, adjust as needed)
 
     % Update the battery state based on the input current and parameters
-
-    %Tustin modelling
     tau1 = R1 * C1;
     tau2 = R2 * C2;
-    
-    % if tau1 > 1e-12 && T > 0
-    %     exp_factor1 = exp(-T/tau1);
-    %     predU1 = U1 * exp_factor1 + R1 * I * (1 - exp_factor1);
-    % else
-    %     predU1 = U1;
-    % end
-    
-    % if tau2 > 1e-12 && T > 0
-    %     exp_factor2 = exp(-T/tau2);
-    %     predU2 = U2 * exp_factor2 + R2 * I * (1 - exp_factor2);
-    % else
-    %     predU2 = U2;
-    % end
 
     % Forward Euler Modelling
     if T < tau1
@@ -41,6 +25,7 @@ function pred = battery_state_model (u, x, T, electParams)
     else
         predU1 = R1 * I; % If T exceeds tau1, assume steady state
     end
+    
     if T < tau2
         predU2 = (1 - T/tau2) * U2 + (T / C2) * I;
     else

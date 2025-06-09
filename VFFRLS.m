@@ -47,7 +47,7 @@ function [theta_out, lambda, y_pred] = VFFRLS(x, error_MIUKF)
     end
 
     if isempty(P)
-        P = (1e3) * eye(n);
+        P = (1e2) * eye(n);
     end
 
     denominator = lambda + phi' * P * phi;
@@ -71,7 +71,4 @@ function [theta_out, lambda, y_pred] = VFFRLS(x, error_MIUKF)
 
     %Output theta
     theta_out = theta;
-
-    % Add P matrix regularization to prevent numerical degradation
-    % This is crucial for long-term stability
 end
