@@ -27,4 +27,4 @@ MATLAB with Optimization Toolbox (required for `lsqnonlin` in Levenberg-Marquard
 
 ## Reference
 
-Yuan, H.; Han, Y.; Zhou, Y.; Chen, Z.; Du, J.; Pei, H. State of Charge Dual Estimation of a Li-ion Battery Based on Variable Forgetting Factor Recursive Least Square and Multi-Innovation Unscented Kalman Filter Algorithm. *Energies* 2022, 15, 1529. https://doi.org/10.3390/en15041529
+H. Yuan, Y. Han, Y. Zhou, Z. Chen, J. Du, and H. Pei, "State of Charge Dual Estimation of a Li-ion Battery Based on Variable Forgetting Factor Recursive Least Square and Multi-Innovation Unscented Kalman Filter Algorithm," *Energies*, vol. 15, no. 4, p. 1529, 2022. DOI: 10.3390/en15041529
