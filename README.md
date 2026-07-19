@@ -1,6 +1,6 @@
 # LiFePO4 Battery SOC Estimation using VFFRLS-MIUKF
 
-Implementation of a hybrid State of Charge (SOC) estimation method for LiFePO4 batteries. Combines Variable Forgetting Factor Recursive Least Squares (VFFRLS) for online parameter identification of a 2nd-order RC Thevenin model with Multi-Innovation Unscented Kalman Filter (MIUKF) for state estimation. A replication of the VFFRLS-MIUKF framework from Yuan et al. (2022), with a modification to use a Levenberg-Marquardt solver to convert the identified discrete-time parameters into physical RC parameters.
+Final project for Sistem Kendali Prediktif Adaptif (Predictive and Adaptive Control Systems). Implements a hybrid State of Charge (SOC) estimation method for LiFePO4 batteries. Combines Variable Forgetting Factor Recursive Least Squares (VFFRLS) for online parameter identification of a 2nd-order RC Thevenin model with Multi-Innovation Unscented Kalman Filter (MIUKF) for state estimation. Based on the VFFRLS-MIUKF framework from Yuan et al. (2022), with a modification to use a Levenberg-Marquardt solver to convert the identified discrete-time parameters into physical RC parameters.
 
 ## Files
 
