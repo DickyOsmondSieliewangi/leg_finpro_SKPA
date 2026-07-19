@@ -41,7 +41,7 @@ function [x_pred, error_MIUKF, electParams] = MIUKF(x, theta_out, T)
     try
         sqrtFactor = chol((eta + L) * posterior_P, 'lower');
     catch
-        warning('posterior_P not positive definite — using filter');
+        warning('posterior_P not positive definite - using filter');
         posterior_P_mod = (posterior_P + posterior_P') / 2;                     % Symmetrize
         posterior_P_mod = posterior_P_mod + 1e-8 * eye(size(posterior_P_mod));       % Regularize
         sqrtFactor = chol((eta + L) * posterior_P_mod, 'lower');
