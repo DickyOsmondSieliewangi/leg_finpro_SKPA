@@ -1,6 +1,6 @@
 # LiFePO4 Battery SOC Estimation using VFFRLS-MIUKF
 
-Implementation of a hybrid State of Charge (SOC) estimation method for LiFePO4 batteries. Combines Variable Forgetting Factor Recursive Least Squares (VFFRLS) for online parameter identification of a 2nd-order RC Thevenin model with Multi-Innovation Unscented Kalman Filter (MIUKF) for state estimation. Based on a reference paper from the SKPA (Control System and Modeling) course final project.
+Implementation of a hybrid State of Charge (SOC) estimation method for LiFePO4 batteries. Combines Variable Forgetting Factor Recursive Least Squares (VFFRLS) for online parameter identification of a 2nd-order RC Thevenin model with Multi-Innovation Unscented Kalman Filter (MIUKF) for state estimation. A student replication of the VFFRLS-MIUKF framework from Yuan et al. (2022), with a modification to use a Levenberg-Marquardt solver to convert the identified discrete-time parameters into physical RC parameters.
 
 ## Files
 
@@ -8,7 +8,7 @@ Implementation of a hybrid State of Charge (SOC) estimation method for LiFePO4 b
 
 - **`VFFRLS.m`** — Variable Forgetting Factor Recursive Least Squares. Identifies discrete-time model parameters (a1, a2, b0, b1, b2) of the battery's transfer function. The forgetting factor λ adapts between 0.90–0.995 based on the MIUKF estimation error — higher error increases forgetting (more weight on new data), lower error stabilizes parameters.
 
-- **`Levenberg_Marquardt.m`** — Converts the discrete-time parameters from VFFRLS into physical electrical parameters (R0, R1, C1, R2, C2) by solving a nonlinear system of equations using MATLAB's `lsqnonlin` with the Levenberg-Marquardt algorithm.
+- **`Levenberg_Marquardt.m`** — Converts the discrete-time transfer function coefficients from VFFRLS into physical electrical parameters (R0, R1, C1, R2, C2) using MATLAB's `lsqnonlin` with the Levenberg-Marquardt algorithm. A modification added to the base framework of the reference paper.
 
 - **`MIUKF.m`** — Multi-Innovation Unscented Kalman Filter. Estimates the battery states (U1, U2, SOC) using sigma-point propagation through the battery model. Uses multi-innovation theory (M=22) — instead of updating with only the latest innovation, it accumulates a window of past innovations weighted by a decay factor, improving convergence over standard UKF.
 
@@ -25,6 +25,6 @@ Implementation of a hybrid State of Charge (SOC) estimation method for LiFePO4 b
 
 MATLAB with Optimization Toolbox (required for `lsqnonlin` in Levenberg-Marquardt)
 
-## Note
+## Reference
 
-Student implementation of a reference paper from the SKPA course final project. Results are preliminary and not validated with quantitative error metrics.
+Yuan, H.; Han, Y.; Zhou, Y.; Chen, Z.; Du, J.; Pei, H. State of Charge Dual Estimation of a Li-ion Battery Based on Variable Forgetting Factor Recursive Least Square and Multi-Innovation Unscented Kalman Filter Algorithm. *Energies* 2022, 15, 1529. https://doi.org/10.3390/en15041529
